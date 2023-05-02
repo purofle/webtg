@@ -78,7 +78,7 @@ def format_record(record: dict) -> str:
     return format_string
 
 
-def make_filter(name):
+def make_filter(name: str):
     def filter_(record):
         return record["extra"].get("name") == name
 
@@ -98,7 +98,11 @@ def init_logging():
     intercept_handler = InterceptHandler()
     logging.getLogger("uvicorn").handlers = [intercept_handler]
     # set logs output, level and format
-    logger.add(sys.stdout, level=logging.DEBUG, format=format_record, filter=make_filter('stdout'))
+    logger.add(sys.stdout,
+               level=logging.DEBUG,
+               format=format_record,
+               filter=make_filter("stdout")
+               )
 
     # 配置loguru的日志句柄，sink代表输出的目标
     logger.configure(

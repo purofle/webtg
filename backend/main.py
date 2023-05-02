@@ -1,19 +1,26 @@
 import uvicorn
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 import utils
+from backend import routers
 
 app = FastAPI()
 logger = utils.init_logging()
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+app.include_router(routers.user_router)
 
+origins = [
+    "http://localhost:3000",
+]
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
