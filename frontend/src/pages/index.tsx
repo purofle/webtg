@@ -1,6 +1,7 @@
-import React, {useState} from "react";
-import Image from "next/image";
-import NormalInput from "@/components/input";
+import React, {useState} from "react"
+import Image from "next/image"
+import NormalInput from "@/components/input"
+import logoPic from "@/../public/logo.png"
 
 export default function Home() {
   const [phone, setPhone] = useState("")
@@ -11,8 +12,8 @@ export default function Home() {
     <>
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <Image className="mx-auto h-10 w-auto" src=""
-                 alt="Your Company" width={200} height={200}/>
+          <Image className="mx-auto h-10 w-auto" src={logoPic}
+                 alt="Your Company" width={640} height={640}/>
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">注册</h2>
         </div>
 
