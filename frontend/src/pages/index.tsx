@@ -7,7 +7,6 @@ export default function Home() {
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const disabledButton = code.length == 0
-  console.log(disabledButton)
   return (
     <>
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
