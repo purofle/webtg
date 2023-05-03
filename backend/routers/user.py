@@ -1,8 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from loguru import logger
+from pyrogram.types import User
 from webauthn import generate_registration_options
 
 from backend.config import Settings
-from backend.utils import create_client
+from backend.context import ContextManager
+from backend.utils import create_client, get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -22,12 +25,40 @@ async def generate_registration_options_api(
 
 @router.get("/login_code")
 async def get_login_code(
-        phone: str
+        phone: str,
+        cm: ContextManager = Depends(get_context_manager)
 ):
-    client = await create_client()
+    client = cm.get_client(phone)
+    if client is None:
+        logger.info("Client not found, create new one.")
+        client = await create_client(cm, phone)
+
     # noinspection PyBroadException
     try:
-        await client.send_code(phone_number=phone)
-        return True
+        send_phone = await client.send_code(phone_number=phone)
+        return send_phone.phone_code_hash
     except Exception as e:
-        return False
+        return str(e)
+
+
+@router.post("/sign_in")
+async def sign_in(
+        phone: str,
+        phone_hash: str,
+        code: str,
+        cm: ContextManager = Depends(get_context_manager)
+):
+    # 获取 Client
+    client = cm.get_client(phone)
+    if client is None:
+        raise Exception("Client not found")
+
+    # 登录
+    user = await client.sign_in(
+        phone_number=phone,
+        phone_code_hash=phone_hash,
+        phone_code=code
+    )
+
+    if isinstance(user, User):
+        return user

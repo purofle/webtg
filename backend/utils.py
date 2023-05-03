@@ -8,21 +8,21 @@ from loguru import logger
 from loguru._defaults import LOGURU_FORMAT
 from pyrogram import idle, Client
 from pyrogram.handlers import MessageHandler
+from starlette.requests import Request
 
 import context
 from backend.handlers import hello
 
 
-async def create_client() -> Client:
+async def create_client(cm: context.ContextManager, phone: str) -> Client:
     from config import Settings
 
     userbot_id = Settings().userbot_id
     userbot_hash = Settings().userbot_hash
 
-    cm = context.ContextManager()
-
     client = Client(name=f"webtg_{cm.client_number}", api_id=userbot_id, api_hash=userbot_hash)
-    cm.add_client(client)
+    cm.add_client(client, phone)
+    logger.info(f"Client {client.name} created")
 
     client.add_handler(MessageHandler(hello))
     asyncio.create_task(run_pyrogram(client))
@@ -120,3 +120,7 @@ async def run_pyrogram(client: Client):
     await idle()
     logger.info(f"{client.name} has been started")
     await exit()
+
+
+def get_context_manager(request: Request):
+    return request.app.state.context_manager

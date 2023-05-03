@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 import utils
 from backend import routers
+from backend.context import ContextManager
 
 app = FastAPI()
 logger = utils.init_logging()
@@ -21,6 +22,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def app_startup():
+    app.state.context_manager = ContextManager()
 
 
 if __name__ == "__main__":
