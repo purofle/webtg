@@ -1,13 +1,16 @@
 from contextvars import ContextVar
+from typing import List
 
 from pyrogram import Client
 
-pyrogram_context: ContextVar[Client] = ContextVar("pyrogram_client")
 
+class ContextManager:
+    def __init__(self):
+        self._client: List[Client] = []
 
-def get_pyrogram() -> Client:
-    return pyrogram_context.get()
+    @property
+    def client_number(self) -> int:
+        return len(self._client)
 
-
-def set_pyrogram(client: Client):
-    pyrogram_context.set(client)
+    def add_client(self, client: Client):
+        self._client.append(client)

@@ -6,28 +6,30 @@ from pprint import pformat
 from loguru import logger
 # noinspection PyProtectedMember
 from loguru._defaults import LOGURU_FORMAT
-from pyrogram import Client, idle
+from pyrogram import idle, Client
 from pyrogram.handlers import MessageHandler
 
 import context
-from handlers import hello
+from backend.handlers import hello
 
 
-async def pyrogram_init():
+async def create_client() -> Client:
     from config import Settings
 
     userbot_id = Settings().userbot_id
     userbot_hash = Settings().userbot_hash
 
-    client = Client(name="webtg", api_id=userbot_id, api_hash=userbot_hash)
+    cm = context.ContextManager()
 
-    context.set_pyrogram(client)
-
-    async with client:
-        await client.get_me()
+    client = Client(name=f"webtg_{cm.client_number}", api_id=userbot_id, api_hash=userbot_hash)
+    cm.add_client(client)
 
     client.add_handler(MessageHandler(hello))
-    asyncio.create_task(run_pyrogram())
+    asyncio.create_task(run_pyrogram(client))
+
+    await client.connect()
+
+    return client
 
 
 class InterceptHandler(logging.Handler):
@@ -113,8 +115,8 @@ def init_logging():
     return logger
 
 
-async def run_pyrogram():
-    client = context.get_pyrogram()
-    await client.start()
+async def run_pyrogram(client: Client):
+    logger.info(f"Starting {client.name}")
     await idle()
+    logger.info(f"{client.name} has been started")
     await exit()
