@@ -16,6 +16,9 @@ dependencies:
   autoprefixer:
     specifier: 10.4.14
     version: 10.4.14(postcss@8.4.23)
+  awesome-phonenumber:
+    specifier: ^5.6.0
+    version: 5.6.0
   eslint:
     specifier: 8.39.0
     version: 8.39.0
@@ -518,6 +521,11 @@ packages:
   /available-typed-arrays@1.0.5:
     resolution: {integrity: sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==}
     engines: {node: '>= 0.4'}
+    dev: false
+
+  /awesome-phonenumber@5.6.0:
+    resolution: {integrity: sha512-c/nd9zP4MwQgJ7yAuQ8gi8A71oxMLDC82xhWhI594gB5RCEPRivMV9L2AYKZTToT2zHmX178HLQAKX4uCV0Hcw==}
+    engines: {node: '>=14'}
     dev: false
 
   /axe-core@4.7.0:
