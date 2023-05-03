@@ -20,7 +20,7 @@ async def create_client(cm: context.ContextManager, phone: str) -> Client:
     userbot_id = Settings().userbot_id
     userbot_hash = Settings().userbot_hash
 
-    client = Client(name=f"webtg_{cm.client_number}", api_id=userbot_id, api_hash=userbot_hash)
+    client = Client(name=f"webtg_{phone[1:]}", api_id=userbot_id, api_hash=userbot_hash)
     cm.add_client(client, phone)
     logger.info(f"Client {client.name} created")
 
