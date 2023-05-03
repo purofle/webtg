@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from loguru import logger
+from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from webauthn import generate_registration_options
 
@@ -46,6 +47,7 @@ async def sign_in(
         phone: str,
         phone_hash: str,
         code: str,
+        password: str = "",
         cm: ContextManager = Depends(get_context_manager)
 ):
     # 获取 Client
@@ -54,11 +56,18 @@ async def sign_in(
         raise Exception("Client not found")
 
     # 登录
-    user = await client.sign_in(
-        phone_number=phone,
-        phone_code_hash=phone_hash,
-        phone_code=code
-    )
+    try:
+        signed_in = await client.sign_in(
+            phone_number=phone,
+            phone_code_hash=phone_hash,
+            phone_code=code
+        )
+    except SessionPasswordNeeded as e:
+        if password == "":
+            logger.error(e)
+            return str(e)
 
-    if isinstance(user, User):
-        return user
+        signed_in = await client.check_password(password)
+
+    if isinstance(signed_in, User):
+        return signed_in.username, signed_in.id, signed_in.phone_number
