@@ -6,6 +6,7 @@ from webauthn import generate_registration_options
 
 from backend.config import Settings
 from backend.context import ContextManager
+from backend.model.Response import SignIn
 from backend.utils import create_client, get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -44,30 +45,27 @@ async def get_login_code(
 
 @router.post("/sign_in")
 async def sign_in(
-        phone: str,
-        phone_hash: str,
-        code: str,
-        password: str = "",
+        information: SignIn,
         cm: ContextManager = Depends(get_context_manager)
 ):
     # 获取 Client
-    client = cm.get_client(phone)
+    client = cm.get_client(information.phone)
     if client is None:
         raise Exception("Client not found")
 
     # 登录
     try:
         signed_in = await client.sign_in(
-            phone_number=phone,
-            phone_code_hash=phone_hash,
-            phone_code=code
+            phone_number=information.phone,
+            phone_code_hash=information.phone_hash,
+            phone_code=information.code
         )
     except SessionPasswordNeeded as e:
-        if password == "":
+        if information.password == "":
             logger.error(e)
             return str(e)
 
-        signed_in = await client.check_password(password)
+        signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
         return signed_in.username, signed_in.id, signed_in.phone_number
