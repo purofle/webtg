@@ -3,3 +3,4 @@ webauthn
 loguru
 redis
 pyrogram
+uvicorn
