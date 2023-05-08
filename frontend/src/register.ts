@@ -1,14 +1,17 @@
-import getConfig from "next/config";
+import Endpoints from '@/endpoints'
 
 export async function send_login_code(phone: string) {
-
-  const { publicRuntimeConfig } = getConfig()
-  const api_url = publicRuntimeConfig.api_url
-
-  const response = await fetch(`${api_url}/user/login_code?phone=${phone}`)
+  const response = await fetch(Endpoints.userLogin(phone))
   if (response.ok) {
     return await response.json()
   } else {
     return null
   }
 }
+
+export async function sign_up(
+  phone: string,
+  phone_hash: string,
+  code: string,
+  passwd: string,
+) {}
