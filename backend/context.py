@@ -1,9 +1,7 @@
-import threading
 from typing import Dict
 
 from loguru import logger
 from pyrogram import Client
-from starlette.requests import Request
 
 
 class ContextManager:
