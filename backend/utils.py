@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import sys
 from pprint import pformat
@@ -7,29 +6,9 @@ from loguru import logger
 # noinspection PyProtectedMember
 from loguru._defaults import LOGURU_FORMAT
 from pyrogram import idle, Client
-from pyrogram.handlers import MessageHandler
 from starlette.requests import Request
 
-import context
-from backend.handlers import hello
-
-
-async def create_client(cm: context.ContextManager, phone: str) -> Client:
-    from config import Settings
-
-    userbot_id = Settings().userbot_id
-    userbot_hash = Settings().userbot_hash
-
-    client = Client(name=f"webtg_{phone[1:]}", api_id=userbot_id, api_hash=userbot_hash)
-    cm.add_client(client, phone)
-    logger.info(f"Client {client.name} created")
-
-    client.add_handler(MessageHandler(hello))
-    asyncio.create_task(run_pyrogram(client))
-
-    await client.connect()
-
-    return client
+from backend.context import ContextManager
 
 
 class InterceptHandler(logging.Handler):
@@ -88,6 +67,10 @@ def make_filter(name: str):
 
 
 def init_logging():
+    """
+    初始化 loguru
+    :return:
+    """
     loggers = (
         logging.getLogger(name)
         for name in logging.root.manager.loggerDict
@@ -116,11 +99,21 @@ def init_logging():
 
 
 async def run_pyrogram(client: Client):
+    """
+    运行 pyrogram 的 :class:`Client`
+    :param client: :class:`pyrogram.Client`
+    :return:
+    """
     logger.info(f"Starting {client.name}")
     await idle()
     logger.info(f"{client.name} has been started")
     await exit()
 
 
-def get_context_manager(request: Request):
+def get_context_manager(request: Request) -> ContextManager:
+    """
+    从 request 中获取 :class:`ContextManager`
+    :param request: :class:`starlette.requests.Request`
+    :return:
+    """
     return request.app.state.context_manager

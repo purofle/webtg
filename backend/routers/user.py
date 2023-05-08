@@ -6,8 +6,8 @@ from webauthn import generate_registration_options
 
 from backend.config import Settings
 from backend.context import ContextManager
-from backend.model.Response import SignIn
-from backend.utils import create_client, get_context_manager
+from backend.model.Response import SignUp
+from backend.utils import get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -31,9 +31,10 @@ async def get_login_code(
         cm: ContextManager = Depends(get_context_manager)
 ):
     client = cm.get_client(phone)
+
     if client is None:
         logger.info("Client not found, create new one.")
-        client = await create_client(cm, phone)
+        client = await cm.create_client(phone)
 
     # noinspection PyBroadException
     try:
@@ -43,9 +44,9 @@ async def get_login_code(
         return str(e)
 
 
-@router.post("/sign_in")
-async def sign_in(
-        information: SignIn,
+@router.post("/sign_up")
+async def sign_up(
+        information: SignUp,
         cm: ContextManager = Depends(get_context_manager)
 ):
     # 获取 Client
