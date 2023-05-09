@@ -1,6 +1,7 @@
 import logging
 import sys
 from pprint import pformat
+from typing import TYPE_CHECKING
 
 from loguru import logger
 # noinspection PyProtectedMember
@@ -8,8 +9,8 @@ from loguru._defaults import LOGURU_FORMAT
 from pyrogram import idle, Client
 from starlette.requests import Request
 
-from backend.context import ContextManager
-
+if TYPE_CHECKING:
+    from context import ContextManager
 
 class InterceptHandler(logging.Handler):
     """
@@ -110,7 +111,7 @@ async def run_pyrogram(client: Client):
     await exit()
 
 
-def get_context_manager(request: Request) -> ContextManager:
+def get_context_manager(request: Request) -> "ContextManager":
     """
     从 request 中获取 :class:`ContextManager`
     :param request: :class:`starlette.requests.Request`
