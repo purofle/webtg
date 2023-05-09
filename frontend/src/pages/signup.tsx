@@ -2,14 +2,15 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import NormalInput from '@/components/input'
 import logoPic from '@/../public/logo.png'
-import { send_login_code } from '@/register'
+import { send_login_code, sign_up } from '@/register'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import WideButton from '@/components/button'
-import { fetch_registration_options } from '@/webauthn'
 
 export default function SignUp() {
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
+  const [phoneHash, setPhoneHash] = useState('')
+  const [passwd, setPasswd] = useState('')
   const disabledButton = code.length == 0
   const [waitingCode, setWaitingCode] = useState(true)
   return (
@@ -60,6 +61,27 @@ export default function SignUp() {
             </div>
 
             <div>
+              <label
+                htmlFor="passwd"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                2FA 密码
+              </label>
+              <div className="mt-2">
+                <NormalInput
+                  id="passwd"
+                  name="passwd"
+                  type="password"
+                  autoComplete="passwd"
+                  required={true}
+                  onEvent={(event) => {
+                    setPasswd(event.target.value)
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="number"
@@ -83,7 +105,7 @@ export default function SignUp() {
                     type="button"
                     disabled={waitingCode}
                     onClick={async () => {
-                      await send_login_code(phone)
+                      setPhoneHash(await send_login_code(phone))
                       setWaitingCode(true)
                     }}
                   >
@@ -99,7 +121,11 @@ export default function SignUp() {
               </div>
             </div>
             <div>
-              <WideButton onClick={async () => {}}>
+              <WideButton
+                onClick={async () => {
+                  console.log(await sign_up(phone, phoneHash, code, passwd))
+                }}
+              >
                 <label
                   className={`${
                     disabledButton ? 'text-gray-400' : 'text-white'
