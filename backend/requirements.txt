@@ -1,6 +1,6 @@
 fastapi
 webauthn
 loguru
-redis
+aioredis
 pyrogram
 uvicorn
