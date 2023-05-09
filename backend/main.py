@@ -1,13 +1,13 @@
+import richuru
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-import utils
 from backend import routers
 from backend.context import ContextManager
 
+richuru.install()
 app = FastAPI()
-logger = utils.init_logging()
 
 app.include_router(routers.user_router)
 

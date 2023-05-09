@@ -1,6 +1,6 @@
 fastapi
 webauthn
-loguru
+richuru
 aioredis
 pyrogram
 uvicorn
