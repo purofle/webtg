@@ -3,10 +3,11 @@ from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from webauthn import generate_registration_options
+from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, UserVerificationRequirement
 
 from backend.config import Settings
 from backend.context import ContextManager
-from backend.model.Response import SignUp
+from backend.model.Response import SignUp, SignUpResponse
 from backend.utils import get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -21,7 +22,11 @@ async def generate_registration_options_api(
         rp_id=Settings().domain,
         rp_name="WebTelegram",
         user_id=str(user_id),
-        user_name=username
+        user_name=username,
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            resident_key=ResidentKeyRequirement.REQUIRED,
+            user_verification=UserVerificationRequirement.PREFERRED
+        )
     ))
 
 
@@ -30,7 +35,7 @@ async def get_login_code(
         phone: str,
         cm: ContextManager = Depends(get_context_manager)
 ):
-    client = cm.get_client(phone)
+    client = await cm.get_client(phone)
 
     if client is None:
         logger.info("Client not found, create new one.")
@@ -50,9 +55,16 @@ async def sign_up(
         cm: ContextManager = Depends(get_context_manager)
 ):
     # 获取 Client
-    client = cm.get_client(information.phone)
+    client = await cm.get_client(information.phone)
     if client is None:
-        raise Exception("Client not found")
+        raise Exception(f"Client not found, phone: {information.phone}, cm: {cm.client}")
+
+    if user := await cm.user_is_logged(client=client):
+        return SignUpResponse(
+            username=user.username,
+            user_id=user.id,
+            phone=user.phone_number
+        )
 
     # 登录
     try:
@@ -69,4 +81,8 @@ async def sign_up(
         signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
-        return signed_in.username, signed_in.id, signed_in.phone_number
+        return SignUpResponse(
+            username=signed_in.username,
+            user_id=signed_in.id,
+            phone=signed_in.phone_number
+        )
