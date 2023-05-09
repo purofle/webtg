@@ -4,6 +4,7 @@ from typing import Dict
 from loguru import logger
 from pyrogram import Client
 from pyrogram.handlers import MessageHandler
+from pyrogram.types import User
 
 from backend.handlers import hello
 from backend.utils import run_pyrogram
@@ -17,14 +18,24 @@ class ContextManager:
     def client_number(self) -> int:
         return len(self._client)
 
-    def get_client(self, phone: str) -> Client | None:
+    async def get_client(self, phone: str) -> Client | None:
         """
         从手机号获取 Client.
         :param phone: 手机号码, 要求包含加号.
         :return: :class:`pyrogram.Client`
         """
         logger.debug(self._client)
-        return self._client.get(phone, None)
+
+        # 判断 session 是否存在
+        if (cached_client := self._client.get(phone[1:], None)) is not None:
+            return cached_client
+
+        new_client = Client(f"webtg_{phone[1:]}")
+        await new_client.connect()
+
+        if await self.user_is_logged(client=new_client):
+            self.add_client(client=new_client, phone=phone)
+            return new_client
 
     def add_client(self, client: Client, phone: str):
         """
@@ -33,13 +44,13 @@ class ContextManager:
         :param phone: 手机号码, 要求包含加号.
         :return:
         """
-        self._client[phone] = client
+        self._client[phone[1:]] = client
         logger.debug(self._client)
 
     async def user_is_logged(self,
                              phone: str | None = None,
                              client: Client | None = None
-                             ) -> bool:
+                             ) -> User | bool:
         """
         判断用户是否登录, client 跟 phone 参数二选一.
         :param client: :class:`pyrogram.Client`
@@ -47,9 +58,9 @@ class ContextManager:
         :return: 是否登录, 已登录为 True, 未登录为 False.
         """
         if client is None:
-            client = self.get_client(phone)
+            client = await self.get_client(phone)
         try:
-            return bool(client.storage.user_id())
+            return await client.get_me()
         except KeyError:
             return False
 
@@ -74,3 +85,7 @@ class ContextManager:
         await client.connect()
 
         return client
+
+    @property
+    def client(self):
+        return self._client
