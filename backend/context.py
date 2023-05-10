@@ -18,16 +18,20 @@ class ContextManager:
     def client_number(self) -> int:
         return len(self._client)
 
-    async def get_client(self, phone: str) -> Client | None:
+    async def get_client(
+            self, phone: str,
+            create_new: bool = True
+    ) -> Client | None:
         """
         从手机号获取 Client.
+        :param create_new: 是否创建新的 Client
         :param phone: 手机号码, 要求包含加号.
         :return: :class:`pyrogram.Client`
         """
         logger.debug(self._client)
 
         # 判断 session 是否存在
-        if (cached_client := self._client.get(phone[1:], None)) is not None:
+        if (cached_client := self._client.get(phone[1:], None)) is not None and not create_new:
             return cached_client
 
         new_client = Client(f"webtg_{phone[1:]}")
