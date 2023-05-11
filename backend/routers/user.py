@@ -5,7 +5,7 @@ from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from redis.asyncio.client import Redis
-from starlette.responses import Response
+from starlette.responses import JSONResponse
 from webauthn import generate_registration_options, verify_registration_response, options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
     UserVerificationRequirement, RegistrationCredential, AuthenticatorAttestationResponse
@@ -15,6 +15,7 @@ from backend.context import ContextManager
 from backend.database import get_redis
 from backend.model.request import VerifyRegistrationRequest, SignUpRequest
 from backend.model.response import SignUpResponse
+from backend.secure import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from backend.utils import get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -86,8 +87,7 @@ async def get_login_code(
 @router.post("/sign_up")
 async def sign_up(
         information: SignUpRequest,
-        response: Response,
-        cm: ContextManager = Depends(get_context_manager)
+        cm: ContextManager = Depends(get_context_manager),
 ):
     # 获取 Client
     client = await cm.get_client(information.phone)
@@ -116,9 +116,16 @@ async def sign_up(
         signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
-        response.set_cookie(key="", value="", secure=True)
-        return SignUpResponse(
+        # Save to cookie
+
+        response = JSONResponse(content=SignUpResponse(
             username=signed_in.username,
             user_id=signed_in.id,
             phone=signed_in.phone_number
-        )
+        ))
+        response.set_cookie("tokens", create_access_token(
+            data={"user_id": user.id},
+            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES),
+                            secure=True, httponly=True)
+
+        return response
