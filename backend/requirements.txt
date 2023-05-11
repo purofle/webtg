@@ -1,6 +1,7 @@
 fastapi
 webauthn
 richuru
-aioredis
+redis
 pyrogram
 uvicorn
+sqlalchemy
