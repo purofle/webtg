@@ -28,18 +28,22 @@ class ContextManager:
         :param phone: 手机号码, 要求包含加号.
         :return: :class:`pyrogram.Client`
         """
-        logger.debug(self._client)
+        logger.debug(f"get: {self._client}")
 
         # 判断 session 是否存在
-        if (cached_client := self._client.get(phone[1:], None)) is not None and not create_new:
+        if (cached_client := self._client.get(phone[1:], None)) is not None:
+            logger.debug(f"return a cached client for {phone}")
             return cached_client
 
-        new_client = Client(f"webtg_{phone[1:]}")
-        await new_client.connect()
+        if create_new:
+            new_client = Client(f"webtg_{phone[1:]}")
+            await new_client.connect()
 
-        if await self.user_is_logged(client=new_client):
-            self.add_client(client=new_client, phone=phone)
-            return new_client
+            if await self.user_is_logged(client=new_client):
+                self.add_client(client=new_client, phone=phone)
+                return new_client
+
+            raise Exception(f"user {phone} is not logged_in")
 
     def add_client(self, client: Client, phone: str):
         """
@@ -48,6 +52,8 @@ class ContextManager:
         :param phone: 手机号码, 要求包含加号.
         :return:
         """
+
+        logger.debug(f"add: {phone}")
         self._client[phone[1:]] = client
         logger.debug(self._client)
 

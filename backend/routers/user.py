@@ -124,7 +124,7 @@ async def sign_up(
             phone=signed_in.phone_number
         ))
         response.set_cookie("tokens", create_access_token(
-            data={"user_id": user.id},
+            data={"user_id": signed_in.id},
             expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES),
                             secure=True, httponly=True)
 

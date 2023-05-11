@@ -1,3 +1,5 @@
+import logging
+
 import richuru
 import uvicorn
 from fastapi import FastAPI
@@ -6,7 +8,8 @@ from starlette.middleware.cors import CORSMiddleware
 from backend import routers
 from backend.context import ContextManager
 
-richuru.install()
+logging.getLogger("pyrogram").setLevel("INFO")
+richuru.install(level="DEBUG")
 app = FastAPI()
 
 app.include_router(routers.user_router)
