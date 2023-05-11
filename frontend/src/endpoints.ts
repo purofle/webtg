@@ -12,7 +12,7 @@ interface Endpoints {
 const endpoints: Endpoints = {
   userLogin: (phone) => `${api_url}/user/login_code?phone=${phone}`,
   generateRegistrationOptions: (id, username) =>
-    `${api_url}/user/generate-registration-options?user_id=${id}&username=${username}`,
+    `${api_url}/user/generate_registration_options?user_id=${id}&username=${username}`,
   signUp: `${api_url}/user/sign_up`,
 }
 

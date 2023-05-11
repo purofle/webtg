@@ -13,7 +13,7 @@ from backend.utils import get_context_manager
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.get("/generate-registration-options")
+@router.get("/generate_registration_options")
 async def generate_registration_options_api(
         user_id: int,
         username: str
@@ -28,6 +28,11 @@ async def generate_registration_options_api(
             user_verification=UserVerificationRequirement.PREFERRED
         )
     ))
+
+
+@router.get("/verify_registration")
+async def verify_registration():
+    pass
 
 
 @router.get("/login_code")
