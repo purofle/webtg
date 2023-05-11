@@ -10,7 +10,6 @@ export async function fetch_registration_options(id: number, username: string) {
 }
 
 export async function verify_registration_options(
-  id: string,
   registration_response: RegistrationResponseJSON,
 ) {
   const response = await fetch(endpoints.verify_registration, {

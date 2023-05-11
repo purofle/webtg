@@ -1,6 +1,9 @@
 import endpoints from '@/endpoints'
 import { startRegistration } from '@simplewebauthn/browser'
-import { fetch_registration_options } from '@/webauthn'
+import {
+  fetch_registration_options,
+  verify_registration_options,
+} from '@/webauthn'
 
 export async function send_login_code(phone: string) {
   const response = await fetch(endpoints.userLogin(phone))
@@ -38,5 +41,7 @@ export async function sign_up(
     data.phone,
   ) // 使用 phone 作为 username 防止无 username 的情况出现
 
-  return await startRegistration(registrationOptions)
+  const registration = await startRegistration(registrationOptions)
+
+  return await verify_registration_options(registration)
 }
