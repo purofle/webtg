@@ -5,6 +5,7 @@ from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from redis.asyncio.client import Redis
+from starlette.responses import Response
 from webauthn import generate_registration_options, verify_registration_response, options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
     UserVerificationRequirement, RegistrationCredential, AuthenticatorAttestationResponse
@@ -66,7 +67,7 @@ async def verify_registration(
 @router.get("/login_code")
 async def get_login_code(
         phone: str,
-        cm: ContextManager = Depends(get_context_manager)
+        cm: ContextManager = Depends(get_context_manager),
 ):
     client = await cm.get_client(phone)
 
@@ -85,6 +86,7 @@ async def get_login_code(
 @router.post("/sign_up")
 async def sign_up(
         information: SignUpRequest,
+        response: Response,
         cm: ContextManager = Depends(get_context_manager)
 ):
     # 获取 Client
@@ -114,6 +116,7 @@ async def sign_up(
         signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
+        response.set_cookie(key="", value="", secure=True)
         return SignUpResponse(
             username=signed_in.username,
             user_id=signed_in.id,

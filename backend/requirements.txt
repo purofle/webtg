@@ -5,3 +5,5 @@ redis
 pyrogram
 uvicorn
 sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
