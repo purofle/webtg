@@ -34,3 +34,4 @@ def get_context_manager(request: Request) -> "ContextManager":
     :return:
     """
     return request.app.state.context_manager
+

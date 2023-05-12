@@ -6,7 +6,6 @@ from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from redis.asyncio.client import Redis
-from starlette.responses import Response
 from webauthn import generate_registration_options, verify_registration_response, options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
     UserVerificationRequirement, RegistrationCredential, AuthenticatorAttestationResponse
@@ -88,7 +87,6 @@ async def get_login_code(
 @router.post("/sign_up")
 async def sign_up(
         information: SignUpRequest,
-        response: Response,
         cm: ContextManager = Depends(get_context_manager),
 ):
     # 获取 Client
@@ -117,13 +115,11 @@ async def sign_up(
     if isinstance(signed_in, User):
         # Save to cookie
 
-        response.set_cookie("tokens", create_access_token(
-            data={"user_id": signed_in.id},
-            expires_delta=timedelta(minutes=float(Settings().ACCESS_TOKEN_EXPIRE_MINUTES))),
-                            secure=True, httponly=True)
-
         return SignUpResponse(
             username=signed_in.username,
             user_id=signed_in.id,
-            phone=signed_in.phone_number
+            phone=signed_in.phone_number,
+            token=create_access_token(
+                data={"user_id": signed_in.id},
+                expires_delta=timedelta(minutes=float(Settings().ACCESS_TOKEN_EXPIRE_MINUTES)))
         )
