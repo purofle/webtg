@@ -1,11 +1,12 @@
 import json
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends
 from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from redis.asyncio.client import Redis
-from starlette.responses import JSONResponse
+from starlette.responses import Response
 from webauthn import generate_registration_options, verify_registration_response, options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
     UserVerificationRequirement, RegistrationCredential, AuthenticatorAttestationResponse
@@ -15,7 +16,7 @@ from backend.context import ContextManager
 from backend.database import get_redis
 from backend.model.request import VerifyRegistrationRequest, SignUpRequest
 from backend.model.response import SignUpResponse
-from backend.secure import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from backend.secure import create_access_token
 from backend.utils import get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -38,7 +39,7 @@ async def generate_registration_options_api(
         )
     )
 
-    await redis.set(user_id, publickey_credential_creation_options.challenge)
+    await redis.set(str(user_id), publickey_credential_creation_options.challenge)
 
     return json.loads(options_to_json(publickey_credential_creation_options))
 
@@ -87,6 +88,7 @@ async def get_login_code(
 @router.post("/sign_up")
 async def sign_up(
         information: SignUpRequest,
+        response: Response,
         cm: ContextManager = Depends(get_context_manager),
 ):
     # 获取 Client
@@ -95,37 +97,33 @@ async def sign_up(
         raise Exception(f"Client not found, phone: {information.phone}, cm: {cm.client}")
 
     if user := await cm.user_is_logged(client=client):
-        return SignUpResponse(
-            username=user.username,
-            user_id=user.id,
-            phone=user.phone_number
-        )
+        signed_in = user
+    else:
 
-    # 登录
-    try:
-        signed_in = await client.sign_in(
-            phone_number=information.phone,
-            phone_code_hash=information.phone_hash,
-            phone_code=information.code
-        )
-    except SessionPasswordNeeded as e:
-        if information.password == "":
-            logger.error(e)
-            return str(e)
+        # 登录
+        try:
+            signed_in = await client.sign_in(
+                phone_number=information.phone,
+                phone_code_hash=information.phone_hash,
+                phone_code=information.code
+            )
+        except SessionPasswordNeeded as e:
+            if information.password == "":
+                logger.error(e)
+                return str(e)
 
-        signed_in = await client.check_password(information.password)
+            signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
         # Save to cookie
 
-        response = JSONResponse(content=SignUpResponse(
+        response.set_cookie("tokens", create_access_token(
+            data={"user_id": signed_in.id},
+            expires_delta=timedelta(minutes=float(Settings().ACCESS_TOKEN_EXPIRE_MINUTES))),
+                            secure=True, httponly=True)
+
+        return SignUpResponse(
             username=signed_in.username,
             user_id=signed_in.id,
             phone=signed_in.phone_number
-        ))
-        response.set_cookie("tokens", create_access_token(
-            data={"user_id": signed_in.id},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES),
-                            secure=True, httponly=True)
-
-        return response
+        )
