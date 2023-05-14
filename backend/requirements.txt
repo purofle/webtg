@@ -7,3 +7,4 @@ uvicorn
 sqlalchemy
 python-jose[cryptography]
 passlib[bcrypt]
+websockets

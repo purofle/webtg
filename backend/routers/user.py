@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import timedelta
 
@@ -8,14 +9,14 @@ from pyrogram.types import User
 from redis.asyncio.client import Redis
 from webauthn import generate_registration_options, verify_registration_response, options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
-    UserVerificationRequirement, RegistrationCredential, AuthenticatorAttestationResponse
+    UserVerificationRequirement, RegistrationCredential
 
 from backend.config import Settings
 from backend.context import ContextManager
 from backend.database import get_redis
 from backend.model.request import VerifyRegistrationRequest, SignUpRequest
 from backend.model.response import SignUpResponse
-from backend.secure import create_access_token
+from backend.secure import create_access_token, get_current_user
 from backend.utils import get_context_manager
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -38,27 +39,23 @@ async def generate_registration_options_api(
         )
     )
 
-    await redis.set(str(user_id), publickey_credential_creation_options.challenge)
+    await redis.set(str(user_id), base64.b64encode(publickey_credential_creation_options.challenge))
 
     return json.loads(options_to_json(publickey_credential_creation_options))
 
 
-@router.get("/verify_registration")
+@router.post("/verify_registration")
 async def verify_registration(
         verify: VerifyRegistrationRequest,
+        user_id: str = Depends(get_current_user),
         redis: Redis = Depends(get_redis)
 ):
-    challenge = bytes(await redis.get(verify.user_id))
+    challenge = base64.b64decode(await redis.get(user_id))
+
+    logger.debug(f"verify: id: {verify.id}")
 
     verify_registration_response(
-        credential=RegistrationCredential(
-            id=verify.id,
-            raw_id=verify.rawId,
-            response=AuthenticatorAttestationResponse(
-                client_data_json=verify.response.clientDataJSON,
-                attestation_object=verify.response.attestationObject
-            )
-        ),
+        credential=RegistrationCredential.parse_obj(verify),
         expected_challenge=challenge,
         expected_rp_id=Settings().domain,
         expected_origin="WebTelegram",
@@ -90,9 +87,15 @@ async def sign_up(
         cm: ContextManager = Depends(get_context_manager),
 ):
     # 获取 Client
-    client = await cm.get_client(information.phone)
-    if client is None:
-        raise Exception(f"Client not found, phone: {information.phone}, cm: {cm.client}")
+    client = await cm.get_client(information.phone, create_new=False)
+    if client is not None:
+        raise Exception(f"Client has been created, please use sign_in. phone: {information.phone}, cm: {cm.client}")
+
+    client = await cm.create_client(phone=information.phone)
+    #
+    # client = await cm.get_client(information.phone)
+    # if client is None:
+    #     raise Exception(f"Client has been created, please use sign_in. phone: {information.phone}, cm: {cm.client}")
 
     if user := await cm.user_is_logged(client=client):
         signed_in = user
@@ -123,3 +126,8 @@ async def sign_up(
                 data={"user_id": signed_in.id},
                 expires_delta=timedelta(minutes=float(Settings().ACCESS_TOKEN_EXPIRE_MINUTES)))
         )
+
+
+@router.post("/sign_in")
+async def sign_in():
+    pass

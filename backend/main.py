@@ -13,6 +13,7 @@ richuru.install(level="DEBUG")
 app = FastAPI()
 
 app.include_router(routers.user_router)
+app.include_router(routers.websocket_router)
 
 origins = [
     "http://localhost:3000",
