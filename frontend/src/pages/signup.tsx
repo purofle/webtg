@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 import Image from 'next/image'
 import NormalInput from '@/components/input'
 import logoPic from '@/../public/logo.png'
-import { send_login_code, sign_up } from '@/register'
-import { parsePhoneNumber } from 'awesome-phonenumber'
+import {send_login_code, sign_up} from '@/user/register'
+import {parsePhoneNumber} from 'awesome-phonenumber'
 import WideButton from '@/components/button'
 
 export default function SignUp() {

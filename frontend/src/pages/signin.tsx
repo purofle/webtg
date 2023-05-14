@@ -2,6 +2,7 @@ import Image from 'next/image'
 import logoPic from '../../public/logo.png'
 import React from 'react'
 import WideButton from '@/components/button'
+import {login} from "@/user/login";
 
 export default function SignIn() {
   return (
@@ -21,7 +22,11 @@ export default function SignIn() {
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="space-y-6">
-          <WideButton>使用 WebAuthn 登录</WideButton>
+          <WideButton onClick={
+            async () => {
+              await login()
+            }
+          }>使用 WebAuthn 登录</WideButton>
         </div>
       </div>
     </div>

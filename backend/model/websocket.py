@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 
 class OP(IntEnum):
-    ping = 0
-    pong = 1
+    heartbeat = 0
+    heartbeat_ack = 1
 
     hello = 2
     identify = 3

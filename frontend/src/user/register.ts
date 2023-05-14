@@ -1,6 +1,6 @@
-import endpoints from '@/endpoints'
+import endpoints from '@/api/endpoints'
 import {startRegistration} from '@simplewebauthn/browser'
-import {fetch_registration_options, verify_registration_options,} from '@/webauthn'
+import {fetch_registration_options, verify_registration_options,} from '@/user/webauthn'
 
 export async function send_login_code(phone: string) {
   const response = await fetch(endpoints.userLogin(phone))

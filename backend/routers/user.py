@@ -7,7 +7,8 @@ from loguru import logger
 from pyrogram.errors import SessionPasswordNeeded
 from pyrogram.types import User
 from redis.asyncio.client import Redis
-from webauthn import generate_registration_options, verify_registration_response, options_to_json
+from webauthn import generate_registration_options, generate_authentication_options, verify_registration_response, \
+    options_to_json
 from webauthn.helpers.structs import AuthenticatorSelectionCriteria, ResidentKeyRequirement, \
     UserVerificationRequirement, RegistrationCredential
 
@@ -44,6 +45,13 @@ async def generate_registration_options_api(
     return json.loads(options_to_json(publickey_credential_creation_options))
 
 
+@router.get("/generate_authentication_options")
+async def get_generate_authentication_options():
+    return generate_authentication_options(
+        rp_id=Settings().domain
+    )
+
+
 @router.post("/verify_registration")
 async def verify_registration(
         verify: VerifyRegistrationRequest,
@@ -52,10 +60,13 @@ async def verify_registration(
 ):
     challenge = base64.b64decode(await redis.get(user_id))
 
-    logger.debug(f"verify: id: {verify.id}")
+    logger.debug(f"verify: id: {verify.id}, raw_id: {verify.rawId}")
+
+    registration_credential = RegistrationCredential.parse_obj(verify)
+    registration_credential.id = base64.urlsafe_b64encode(verify.rawId.encode("utf-8")).decode("utf-8")
 
     verify_registration_response(
-        credential=RegistrationCredential.parse_obj(verify),
+        credential=registration_credential,
         expected_challenge=challenge,
         expected_rp_id=Settings().domain,
         expected_origin="WebTelegram",
@@ -87,33 +98,23 @@ async def sign_up(
         cm: ContextManager = Depends(get_context_manager),
 ):
     # 获取 Client
-    client = await cm.get_client(information.phone, create_new=False)
-    if client is not None:
-        raise Exception(f"Client has been created, please use sign_in. phone: {information.phone}, cm: {cm.client}")
-
-    client = await cm.create_client(phone=information.phone)
-    #
-    # client = await cm.get_client(information.phone)
-    # if client is None:
-    #     raise Exception(f"Client has been created, please use sign_in. phone: {information.phone}, cm: {cm.client}")
-
-    if user := await cm.user_is_logged(client=client):
-        signed_in = user
-    else:
+    client = await cm.get_client(information.phone)
+    if client is None:
+        raise Exception(f"Client not created. phone: {information.phone}, cm: {cm.client}")
 
         # 登录
-        try:
-            signed_in = await client.sign_in(
-                phone_number=information.phone,
-                phone_code_hash=information.phone_hash,
-                phone_code=information.code
-            )
-        except SessionPasswordNeeded as e:
-            if information.password == "":
-                logger.error(e)
-                return str(e)
+    try:
+        signed_in = await client.sign_in(
+            phone_number=information.phone,
+            phone_code_hash=information.phone_hash,
+            phone_code=information.code
+        )
+    except SessionPasswordNeeded as e:
+        if information.password == "":
+            logger.error(e)
+            return str(e)
 
-            signed_in = await client.check_password(information.password)
+        signed_in = await client.check_password(information.password)
 
     if isinstance(signed_in, User):
         # Save to cookie

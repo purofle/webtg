@@ -18,17 +18,22 @@ def event(event_name):
     return decorator
 
 
-async def dispatch_event(op_code: int, *args, **kwargs):
+async def dispatch_event(op_code: int, websocket: WebSocket, *args, **kwargs):
     handler_func = _event_handlers.get(op_code)
     if handler_func is None:
         logger.error(f"No handler found for event: {op_code}")
         return
-    await handler_func(*args, **kwargs)
+    await handler_func(websocket, *args, **kwargs)
 
 
-@event(OP.ping)
-async def op_ping(data: Any, seq: int):
+@event(OP.heartbeat)
+async def op_ping(websocket: WebSocket, data: Any, seq: int):
     logger.info(str(data), seq)
+
+
+@event(OP.identify)
+async def identify(websocket: WebSocket, data: Any, seq: int):
+    pass
 
 
 @router.websocket("/")

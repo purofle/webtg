@@ -37,12 +37,9 @@ class ContextManager:
 
         if create_new:
             new_client = await self.create_client(phone)
+            return new_client
 
-            if await self.user_is_logged(client=new_client):
-                self.add_client(client=new_client, phone=phone)
-                return new_client
-
-            raise Exception(f"user {phone} is not logged_in")
+        return None
 
     def add_client(self, client: Client, phone: str):
         """
