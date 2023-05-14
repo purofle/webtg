@@ -9,6 +9,9 @@ export default function Home() {
       <Link href="/signup">
         <WideButton>注册</WideButton>
       </Link>
+      <Link href="/signin">
+        <WideButton>登录</WideButton>
+      </Link>
     </>
   )
 }

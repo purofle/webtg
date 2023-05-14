@@ -36,8 +36,7 @@ class ContextManager:
             return cached_client
 
         if create_new:
-            new_client = Client(f"webtg_{phone[1:]}")
-            await new_client.connect()
+            new_client = await self.create_client(phone)
 
             if await self.user_is_logged(client=new_client):
                 self.add_client(client=new_client, phone=phone)

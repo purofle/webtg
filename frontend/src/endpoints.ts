@@ -14,7 +14,7 @@ const endpoints: Endpoints = {
   userLogin: (phone) => `${api_url}/user/login_code?phone=${phone}`,
   generateRegistrationOptions: (id, username) =>
     `${api_url}/user/generate_registration_options?user_id=${id}&username=${username}`,
-  verify_registration: `${api_url}/verify_registration`,
+  verify_registration: `${api_url}/user/verify_registration`,
   signUp: `${api_url}/user/sign_up`,
 }
 

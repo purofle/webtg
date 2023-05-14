@@ -1,9 +1,6 @@
 import endpoints from '@/endpoints'
-import { startRegistration } from '@simplewebauthn/browser'
-import {
-  fetch_registration_options,
-  verify_registration_options,
-} from '@/webauthn'
+import {startRegistration} from '@simplewebauthn/browser'
+import {fetch_registration_options, verify_registration_options,} from '@/webauthn'
 
 export async function send_login_code(phone: string) {
   const response = await fetch(endpoints.userLogin(phone))
@@ -36,6 +33,8 @@ export async function sign_up(
 
   const data = await response.json()
 
+  window.localStorage.setItem('token', data.token)
+
   const registrationOptions = await fetch_registration_options(
     data.user_id,
     data.phone,
@@ -43,5 +42,5 @@ export async function sign_up(
 
   const registration = await startRegistration(registrationOptions)
 
-  return await verify_registration_options(registration)
+  return await verify_registration_options(registration, data.token)
 }

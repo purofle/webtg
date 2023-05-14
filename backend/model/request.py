@@ -20,6 +20,5 @@ class VerifyRegistrationRequest(BaseModel):
     rawId: str
     response: RegistrationResponse
     type: str
-    user_id: str
     clientExtensionResults: Dict[str, str]
     authenticatorAttachment: str
